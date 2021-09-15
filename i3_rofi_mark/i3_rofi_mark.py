@@ -37,7 +37,8 @@ def mark_window(mark):
 
 
 def select_window(mark):
-    command = ['i3-msg', '-t', 'command', '[con_mark="{}"] focus'.format(mark)]
+    command = ['i3-msg', '-t', 'command',
+               '[con_mark="^{}$"] focus'.format(mark)]
     LOGGER.debug('Running: %r', command)
     subprocess.check_call(command)
 
