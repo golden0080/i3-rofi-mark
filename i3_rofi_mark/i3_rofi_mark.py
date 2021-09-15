@@ -1,4 +1,3 @@
-
 import json
 import logging
 import argparse
@@ -7,13 +6,15 @@ import subprocess
 LOGGER = logging.getLogger()
 
 
-def rofi_prompt(prompt, choices, values=None):
+def rofi_prompt(prompt, choices, values=None, non_empty_reply=False):
     p = subprocess.Popen(
         ['rofi', '-dmenu', '-p', prompt],
         stdout=subprocess.PIPE, stdin=subprocess.PIPE)
     choice_string = '\n'.join(choices)
     reply, _ = p.communicate(choice_string.encode('utf8'))
     reply_value = reply.strip().decode('utf8')
+    if non_empty_reply:
+        assert reply_value, "Expect non-empty reply value."
     if values is not None:
         try:
             reply_idx = choices.index(reply_value)
@@ -72,13 +73,13 @@ def main():
                      for mark in get_marks() if mark.startswith(args.prefix)]
 
         LOGGER.debug('marks: %r', marks)
-        window = rofi_prompt("Goto", marks)
+        window = rofi_prompt("Goto", marks, non_empty_reply=True)
         if args.prefix is not None:
             window = args.prefix + window
         LOGGER.debug('Selecting window %r', window)
         select_window(window)
     elif args.command == 'mark':
-        mark = rofi_prompt("Mark Window", marks)
+        mark = rofi_prompt("Mark Window", marks, non_empty_reply=True)
         if args.prefix is not None:
             mark = args.prefix + mark
         LOGGER.debug('Marking with %r', mark)
@@ -89,9 +90,13 @@ def main():
                      for mark in get_marks() if mark.startswith(args.prefix)]
 
         mark = rofi_prompt(
-            "Remove Mark", ["(Remove All)"] + marks, values=[""] + marks)
+            "Remove Mark", ["(Remove All)"] + marks, values=[""] + marks, non_empty_reply=True)
         if args.prefix:
             mark = args.prefix + mark
         unmark(mark)
     else:
         raise ValueError(args.command)
+
+
+if __name__ == "__main__":
+    main()
